@@ -1,17 +1,15 @@
 <?php
 session_start();
 
-// Check if user is logged in (session exists)
 if (!isset($_SESSION['user'])) {
-    // Redirect to login if session doesn't exist
+    
     header("Location: login.html");
     exit();
 }
 
-// Include database connection
+
 include('db_connection.php');
 
-// Function to get item details by ID
 function getItemDetails($conn, $item_id) {
     $sql = "SELECT id, name, price, image FROM items WHERE id=?";
     $stmt = $conn->prepare($sql);
@@ -23,30 +21,25 @@ function getItemDetails($conn, $item_id) {
     return $item;
 }
 
-// Fetch logged-in user data
 $user = $_SESSION['user'];
 $user_id = $user['id'];
 
-// Check if selected_items session exists and fetch item details
 if (isset($_SESSION['selected_items']) && !empty($_SESSION['selected_items'])) {
     $selected_items = $_SESSION['selected_items'];
 
-    // Fetch item details for selected items
     $order_items = [];
     foreach ($selected_items as $item_id => $quantity) {
         $item = getItemDetails($conn, $item_id);
         if ($item) {
             $item['quantity'] = $quantity;
-            $item['total_price'] = $item['price'] * $quantity; // Calculate total price
+            $item['total_price'] = $item['price'] * $quantity; 
             $order_items[] = $item;
         }
     }
 
-    // Clear selected_items session after fetching details
     unset($_SESSION['selected_items']);
 } else {
-    // If no selected items, redirect to cart or item listing page
-    header("Location: cart.php"); // Adjust as per your application flow
+    header("Location: cart.php"); 
     exit();
 }
 
@@ -170,10 +163,9 @@ $conn->close();
     </section>
 
     <script>
-        // Function to update total price based on quantity change
         function updateTotal(itemId) {
             const quantity = document.getElementById(`quantity${itemId}`).value;
-            const price = <?php echo json_encode($item['price']); ?>; // Retrieve price from PHP
+            const price = <?php echo json_encode($item['price']); ?>; 
             const totalElement = document.getElementById(`totalPrice${itemId}`);
             const total = price * quantity;
             totalElement.textContent = `$${total.toFixed(2)}`;

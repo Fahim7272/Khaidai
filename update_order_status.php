@@ -11,7 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $order_id = $_POST['order_id'];
     $status = $_POST['status'];
 
-    // Update the order status in the database
     $sql = "UPDATE orders SET status = ? WHERE id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("si", $status, $order_id);

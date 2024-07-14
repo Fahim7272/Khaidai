@@ -2,7 +2,6 @@
 session_start();
 include('db_connection.php');
 
-// Check if user is logged in
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit();
@@ -14,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['update_profile'])) {
         $name = $_POST['name'];
         $email = $_POST['email'];
-        $location = $_POST['location']; // Add location field
+        $location = $_POST['location']; 
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error_message = "Invalid email format";
@@ -27,8 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $success_message = "Profile updated successfully!";
                 $_SESSION['user']['name'] = $name;
                 $_SESSION['user']['email'] = $email;
-                $_SESSION['user']['location'] = $location; // Update session with location
-            } else {
+                $_SESSION['user']['location'] = $location; 
+
                 $error_message = "Error updating profile: " . $conn->error;
             }
 
@@ -45,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             if ($stmt->execute()) {
                 $success_message = "Profile picture updated successfully!";
-                $_SESSION['user']['profile_picture'] = $profile_picture; // Update session with new profile picture
+                $_SESSION['user']['profile_picture'] = $profile_picture; 
             } else {
                 $error_message = "Error updating profile picture: " . $conn->error;
             }
