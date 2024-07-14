@@ -1,0 +1,118 @@
+/* CSS for Login Section */
+.login {
+    padding: 5% 0;
+    background-color: #f7f7f7;
+}
+
+.login-form {
+    width: 40%;
+    margin: 0 auto;
+    padding: 2%;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.login-form fieldset {
+    border: none;
+}
+
+.login-form legend {
+    font-size: 2rem;
+    margin-bottom: 10%;
+    color: #2f3542;
+}
+
+.input-container {
+    margin-bottom: 1.5rem;
+}
+
+.input-container label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.input-container input {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.input-container input:focus {
+    border-color: #ff6b81;
+    outline: none;
+}
+
+.login-form .btn-primary {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.2rem;
+    border-radius: 5px;
+    margin-top: 1rem;
+    cursor: pointer;
+}
+
+.login-form .btn-primary:hover {
+    background-color: #f4eaeb;
+}
+/* CSS for Signup Section */
+.signup {
+    padding: 5% 0;
+    background: linear-gradient(to right, #f2f6f4, #eee5e5);
+}
+
+.signup-form {
+    width: 40%;
+    margin: 0 auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.signup-form h2 {
+    margin-bottom: 2rem;
+}
+
+.input-container {
+    margin-bottom: 1.5rem;
+}
+
+.input-container label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.input-container input {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.input-container input:focus {
+    border-color: #ff6b81;
+    outline: none;
+}
+
+.signup-form .btn-primary {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.2rem;
+    border-radius: 5px;
+    margin-top: 1rem;
+}
+
+.signup-form p {
+    margin-top: 1.5rem;
+}
+
