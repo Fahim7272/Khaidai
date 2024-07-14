@@ -1,0 +1,76 @@
+.food-menu {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between; /* Distribute items evenly */
+}
+
+.food-menu-box {
+    width: 48%; /* Calculate width for three cards with spacing */
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 1%;
+    padding: 2%;
+    float: left;
+}
+
+.food-menu-img {
+    height: 200px; /* Set image container height */
+    overflow: hidden;
+}
+
+.food-menu-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.food-menu-desc {
+    height: 150px;
+    padding: 15px;
+}
+
+.food-menu-desc h4 {
+    margin-top: 0;
+    font-size: 20px;
+}
+
+.food-menu-desc .food-price {
+    font-weight: bold;
+    color: #f40a0a;
+}
+
+.food-menu-desc .food-detail {
+    color: #666;
+}
+
+.food-menu-desc a.btn {
+    display: inline-block;
+    margin-top: 10px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.food-menu-desc a.btn:hover {
+    background-color: #45a049;
+}
+
+@media (max-width: 992px) {
+    .food-menu-box {
+        width: calc(50% - 20px); /* Adjust width for two cards per row on smaller screens */
+    }
+}
+
+@media (max-width: 768px) {
+    .food-menu-box {
+        width: calc(100% - 20px); /* Full width for one card per row on mobile */
+    }
+}
