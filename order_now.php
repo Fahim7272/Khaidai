@@ -2,7 +2,6 @@
 session_start();
 include('db_connection.php');
 
-// Redirect to login if user is not logged in
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
@@ -10,26 +9,22 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Fetch user's location information
 $sql_user = "SELECT * FROM users WHERE id = $user_id";
 $result_user = $conn->query($sql_user);
 
 if ($result_user->num_rows == 1) {
     $user = $result_user->fetch_assoc();
     $user_name = $user['name'];
-    $user_location = $user['location']; // Assuming location field exists in users table
+    $user_location = $user['location']; 
 } else {
-    // Redirect or handle error if user data not found
     header('Location: food.php');
     exit();
 }
 
-// Initialize variables
 $item_id = isset($_GET['id']) ? $_GET['id'] : null;
 $item_details = [];
 $error_message = '';
 
-// Fetch item details from items table
 if (!empty($item_id)) {
     $sql_item = "SELECT * FROM items WHERE id = $item_id";
     $result_item = $conn->query($sql_item);
@@ -43,24 +38,20 @@ if (!empty($item_id)) {
     $error_message = "Item ID not provided.";
 }
 
-// Handle form submission to place order
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['quantity'])) {
     $quantity = $_POST['quantity'];
     $payment_method = isset($_POST['payment_method']) ? $_POST['payment_method'] : '';
 
-    // Calculate total price
     $total_price = $item_details['price'] * $quantity;
 
-    // Insert order details into orders table
     $sql_insert_order = "INSERT INTO orders (user_id, item_id, quantity, total_price, payment_method)
                          VALUES ($user_id, $item_id, $quantity, $total_price, '$payment_method')";
 
     if ($conn->query($sql_insert_order) === TRUE) {
-        // Order inserted successfully, redirect to order confirmation page
+       
         header("Location: my_orders.php");
         exit();
     } else {
-        // Handle insert failure
         echo "Error inserting order: " . $conn->error;
     }
 }
@@ -73,9 +64,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['quantity'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Now - KhaiDai</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/form.css"> <!-- Adjust CSS file path as per your structure -->
+    <link rel="stylesheet" href="css/form.css"> 
     <style>
-        /* Enhanced CSS for styling */
         
         .order-summary {
             margin-bottom: 20px;
@@ -127,7 +117,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['quantity'])) {
     </style>
 </head>
 <body>
-    <?php include 'navbar.php'; ?> <!-- Include your navigation bar -->
+    <?php include 'navbar.php'; ?> 
 
     <div class="container">
         <h2 class="text-center">Order Now</h2>
@@ -172,7 +162,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['quantity'])) {
         <?php endif; ?>
     </div>
 
-    <?php include 'footer.php'; ?> <!-- Include your footer -->
+    <?php include 'footer.php'; ?> 
 
 </body>
 </html>
