@@ -1,0 +1,51 @@
+
+.navcontainer {
+    width: 90%;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navcontainer .logo {
+    flex: 1;
+}
+
+.navcontainer .logo a {
+    display: block;
+    text-decoration: none;
+}
+
+.navcontainer .logo img {
+    width: 100px;
+    height: auto;
+}
+
+.navcontainer .menu ul {
+    list-style-type: none;
+    display: flex;
+}
+
+.navcontainer .menu ul li {
+    margin-right: 20px;
+}
+
+.navcontainer .menu ul li:last-child {
+    margin-right: 0;
+}
+
+.navcontainer .menu ul li a {
+    color: #fa0404;
+    text-decoration: none;
+    padding: 10px;
+    transition: all 0.3s ease;
+}
+
+.navcontainer .menu ul li a:hover {
+    background-color: #555;
+    border-radius: 5px;
+}
+
+.clearfix {
+    clear: both;
+}
