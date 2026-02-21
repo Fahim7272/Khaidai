@@ -2,7 +2,6 @@
 session_start();
 include('db_connection.php');
 
-// Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
@@ -10,15 +9,13 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Fetch cart items from the database
 $sql = "SELECT c.item_id, c.quantity, i.name, i.price, i.image, c.created_at 
-        FROM cart_items c 
-        JOIN items i ON c.item_id = i.id 
-        WHERE c.user_id = ?";
+        FROM cart_items c JOIN items i ON c.item_id = i.id WHERE c.user_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
+$total_cart_price = 0;
 ?>
 
 <!DOCTYPE html>
@@ -26,130 +23,195 @@ $result = $stmt->get_result();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Cart</title>
+    <title>My Cart - KhaiDai</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/cart.css">
+    <link rel="stylesheet" href="css/modern.css">
     <style>
-        .cart {
-            padding: 20px 0;
+        .cart-container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 40px 20px; 
         }
-
-        
-
-        .cart h2 {
-            font-size: 2em;
-            margin-bottom: 20px;
-            text-align: center;
+        .cart-item-modern { 
+            display: flex; 
+            align-items: center; 
+            background: var(--white); 
+            border-radius: var(--radius-md); 
+            box-shadow: var(--shadow-soft); 
+            margin-bottom: 20px; 
+            padding: 15px; 
+            transition: var(--transition); 
         }
-
-        .cart-items {
-            display: flex;
-            flex-direction: column;
+        .cart-item-modern:hover { 
+            box-shadow: var(--shadow-hover); 
+            transform: translateY(-3px); 
         }
-
-        .cart-item {
-            display: flex;
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            overflow: hidden;
+        .cart-img { 
+            width: 120px; 
+            height: 120px; 
+            border-radius: 8px; 
+            object-fit: cover; 
+            margin-right: 20px; 
         }
-
-        .cart-item-img img {
-            width: 150px;
-            height: auto;
-            border-right: 1px solid #ddd;
+        .cart-details { 
+            flex: 1; 
         }
-
-        .cart-item-desc {
-            padding: 10px;
-            flex: 1;
+        .cart-details h4 { 
+            font-size: 1.4rem; 
+            margin: 0 0 5px 0; 
+            color: var(--text-main); 
         }
-
-        .cart-item-desc h4 {
-            font-size: 1.5em;
-            margin-bottom: 10px;
+        .cart-price { 
+            font-size: 1.2rem; 
+            color: var(--primary-color); 
+            font-weight: 700; 
+            margin-bottom: 5px; 
         }
-
-        .cart-item-desc p {
-            margin: 5px 0;
+        .cart-meta { 
+            color: var(--text-muted); 
+            font-size: 0.95rem; 
         }
-
-        .cart-item-price {
-            color: #e67e22;
-            font-size: 1.2em;
+        .cart-actions { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: flex-end; 
+            justify-content: space-between; 
+            height: 100px; 
         }
-
-        .cart-item-quantity {
-            font-size: 1em;
+        .cart-actions .item-total {
+            font-weight: 600; 
+            font-size: 1.1rem;
         }
-
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            margin-top: 10px;
-            border-radius: 5px;
-            text-align: center;
+        .btn-remove { 
+            color: #e74c3c; 
+            text-decoration: none; 
+            font-weight: 600; 
+            font-size: 0.9rem; 
+            transition: var(--transition); 
+        }
+        .btn-remove:hover { 
+            color: #c0392b; 
+            text-decoration: underline; 
+        }
+        .cart-summary { 
+            background: var(--white); 
+            padding: 30px; 
+            border-radius: var(--radius-md); 
+            box-shadow: var(--shadow-soft); 
+            margin-top: 30px; 
+            text-align: right; 
+        }
+        .cart-summary h3 { 
+            font-size: 1.5rem; 
+            margin-bottom: 20px; 
+            color: var(--text-main); 
+        }
+        .cart-summary .highlight {
+            color: var(--primary-color);
+        }
+        .btn-full { 
+            display: inline-block; 
+            width: auto; 
+            padding: 15px 40px; 
+            font-size: 1.1rem;
+            background: var(--primary-color);
+            color: var(--white);
             text-decoration: none;
-            color: #fff;
-            background-color: #e67e22;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
         }
-
-        .btn-primary {
-            background-color: #3498db;
+        .btn-full:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
         }
-
-        .btn-danger {
-            background-color: #e74c3c;
+        .btn-full.small {
+            padding: 12px 30px;
         }
-
-        .btn-primary:hover,
-        .btn-danger:hover {
-            background-color: #d35400;
+        .empty-cart {
+            text-align: center;
+            padding: 50px;
+            background: var(--white);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-soft);
         }
-    </style> <!-- Additional CSS for cart page -->
+        .empty-cart img {
+            margin-bottom: 20px;
+        }
+        .empty-cart h3 {
+            color: var(--text-main);
+            margin-bottom: 15px;
+        }
+        .empty-cart p {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+        }
+        .section-heading {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .cart-section {
+            min-height: 70vh;
+        }
+    </style>
 </head>
-<body>
-
+<body class="bg-light">
     <?php include 'navbar.php'; ?>
 
-    <section class="food-search text-center">
-        <div class="container">
-            
-        <h3 class="text-white">My Cart</h3>
-
-        </div>
-    </section>
-    
-    <section class="cart">
-        <div class="container">
-            
+    <section class="section-padding cart-section">
+        <div class="cart-container">
+            <h2 class="section-heading">Your Shopping Cart</h2>
             
             <?php if ($result->num_rows > 0): ?>
-                <div class="cart-items">
+                <div class="cart-items-wrapper">
                     <?php while($row = $result->fetch_assoc()): ?>
-                        <div class="cart-item">
-                            <div class="cart-item-img">
-                                <?php if ($row['image']): ?>
-                                    <img src="data:image/jpeg;base64,<?php echo base64_encode($row['image']); ?>" alt="<?php echo htmlspecialchars($row['name']); ?>" class="img-responsive img-curve">
-                                <?php else: ?>
-                                    <img src="images/default-food-img.jpg" alt="Default Image" class="img-responsive img-curve">
-                                <?php endif; ?>
-                            </div>
-                            <div class="cart-item-desc">
+                        <?php 
+                        $item_total = $row['price'] * $row['quantity']; 
+                        $total_cart_price += $item_total; 
+                        ?>
+                        <div class="cart-item-modern">
+                            <?php if ($row['image']): ?>
+                                <img src="data:image/jpeg;base64,<?php echo base64_encode($row['image']); ?>" 
+                                     alt="<?php echo htmlspecialchars($row['name']); ?>" 
+                                     class="cart-img">
+                            <?php else: ?>
+                                <img src="images/default-food-img.jpg" 
+                                     alt="Default Image" 
+                                     class="cart-img">
+                            <?php endif; ?>
+                            
+                            <div class="cart-details">
                                 <h4><?php echo htmlspecialchars($row['name']); ?></h4>
-                                <p class="cart-item-price">৳<?php echo htmlspecialchars($row['price']); ?></p>
-                                <p class="cart-item-quantity">Quantity: <?php echo htmlspecialchars($row['quantity']); ?></p>
-                                <p class="cart-item-date">Added on: <?php echo htmlspecialchars($row['created_at']); ?></p>
-                                <br>
-                                <a href="remove_from_cart.php?id=<?php echo $row['item_id']; ?>" class="btn btn-danger">Remove</a>
+                                <div class="cart-price">৳ <?php echo htmlspecialchars($row['price']); ?></div>
+                                <div class="cart-meta">
+                                    Quantity: <strong><?php echo htmlspecialchars($row['quantity']); ?></strong><br>
+                                    <small>Added: <?php echo date('M d, Y', strtotime($row['created_at'])); ?></small>
+                                </div>
+                            </div>
+                            
+                            <div class="cart-actions">
+                                <div class="item-total">৳ <?php echo number_format($item_total, 2); ?></div>
+                                <a href="remove_from_cart.php?id=<?php echo $row['item_id']; ?>" 
+                                   class="btn-remove">Remove Item</a>
                             </div>
                         </div>
                     <?php endwhile; ?>
                 </div>
-                <a href="checkout.php" class="btn btn-primary">Proceed to Checkout</a>
+
+                <div class="cart-summary">
+                    <h3>Subtotal: <span class="highlight">৳ <?php echo number_format($total_cart_price, 2); ?></span></h3>
+                    <a href="checkout.php" class="btn-full">Proceed to Checkout</a>
+                </div>
             <?php else: ?>
-                <p class="text-center">Your cart is empty.</p>
+                <div class="empty-cart">
+                    <img src="https://img.icons8.com/fluency/96/000000/shopping-cart.png" alt="Empty Cart">
+                    <h3>Your cart is currently empty</h3>
+                    <p>Looks like you haven't added any delicious food yet.</p>
+                    <a href="foods.php" class="btn-full small">Browse Menu</a>
+                </div>
             <?php endif; ?>
         </div>
     </section>
@@ -157,8 +219,4 @@ $result = $stmt->get_result();
     <?php include 'footer.php'; ?>
 </body>
 </html>
-
-<?php
-$conn->close();
-?>
-
+<?php $conn->close(); ?>

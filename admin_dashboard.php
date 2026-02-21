@@ -2,42 +2,18 @@
 session_start();
 include('db_connection.php');
 
-// Check if the user is logged in and is an admin
 if (!isset($_SESSION['admin'])) {
     header("Location: login.php");
     exit();
 }
 
-$admin = $_SESSION['admin'];
-
-// Fetch total counts from the database
 $food_count_sql = "SELECT COUNT(*) AS total_food FROM items";
 $user_count_sql = "SELECT COUNT(*) AS total_users FROM users";
 $order_count_sql = "SELECT COUNT(*) AS total_orders FROM orders";
 
-$food_count_result = $conn->query($food_count_sql);
-$user_count_result = $conn->query($user_count_sql);
-$order_count_result = $conn->query($order_count_sql);
-
-$total_food = $food_count_result->fetch_assoc()['total_food'];
-$total_users = $user_count_result->fetch_assoc()['total_users'];
-$total_orders = $order_count_result->fetch_assoc()['total_orders'];
-
-// Calculate order increase
-$previous_total_orders = isset($_SESSION['previous_total_orders']) ? $_SESSION['previous_total_orders'] : 0;
-$order_increase = $total_orders - $previous_total_orders;
-
-// Update session with the current total orders
-$_SESSION['previous_total_orders'] = $total_orders;
-
-// Calculate user increase
-$previous_total_users = isset($_SESSION['previous_total_users']) ? $_SESSION['previous_total_users'] : 0;
-$user_increase = $total_users - $previous_total_users;
-
-// Update session with the current total users
-$_SESSION['previous_total_users'] = $total_users;
-
-$conn->close();
+$total_food = $conn->query($food_count_sql)->fetch_assoc()['total_food'];
+$total_users = $conn->query($user_count_sql)->fetch_assoc()['total_users'];
+$total_orders = $conn->query($order_count_sql)->fetch_assoc()['total_orders'];
 ?>
 
 <!DOCTYPE html>
@@ -45,88 +21,118 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Admin Dashboard - KhaiDai</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/modern.css">
     <style>
-        /* Add CSS styling here if necessary */
-        .admin-dashboard {
-            padding: 20px;
+        .admin-header { 
+            background: var(--dark-bg); 
+            padding: 40px 0; 
+            color: var(--white); 
+            text-align: center; 
         }
-        .content {
+        .admin-header h1 { 
+            font-size: 2.5rem; 
+            margin-bottom: 10px; 
+        }
+        .dashboard-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 30px; 
+            margin-top: -40px; 
+        }
+        .stat-card { 
+            background: var(--white); 
+            padding: 40px 30px; 
+            border-radius: var(--radius-lg); 
+            box-shadow: var(--shadow-soft); 
+            text-align: center; 
+            transition: var(--transition); 
+            border-top: 5px solid var(--primary-color); 
+        }
+        .stat-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: var(--shadow-hover); 
+        }
+        .stat-card:nth-child(2) { 
+            border-top-color: #3498db; 
+        }
+        .stat-card:nth-child(3) { 
+            border-top-color: #2ecc71; 
+        }
+        .stat-title { 
+            font-size: 1.2rem; 
+            color: var(--text-muted); 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            margin-bottom: 15px; 
+        }
+        .stat-number { 
+            font-size: 3.5rem; 
+            color: var(--text-main); 
+            font-weight: 700; 
+            line-height: 1; 
+        }
+        .admin-actions {
             text-align: center;
+            margin-top: 50px;
         }
-        .dashboard-cards {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
+        .admin-actions .btn-primary,
+        .admin-actions .btn-nav-outline {
+            padding: 15px 30px;
+            border-radius: 8px;
+            display: inline-block;
+            text-decoration: none;
+            font-weight: 500;
         }
-        .card {
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 20px;
-            width: 250px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        .admin-actions .btn-primary {
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
         }
-        .card h3 {
-            margin-bottom: 10px;
-        }
-        .card p {
-            font-size: 1.5em;
-            margin: 0;
-        }
-        .card .increase {
-            color: green;
-            font-size: 0.75em;
-        }
-        .card .decrease {
-            color: red;
-            font-size: 0.75em;
+        .admin-actions .btn-nav-outline {
+            border: 2px solid var(--primary-color);
+            color: var(--text-main);
+            margin-left: 15px;
+            background: transparent;
         }
     </style>
 </head>
-<body>
+<body class="bg-light">
     <?php include 'navbar.php'; ?>
-    <section class="food-search text-center">
+
+    <div class="admin-header">
         <div class="container">
-            <h1>Welcome, <?php echo htmlspecialchars($admin['name']); ?>!</h1>
-            <p>From here, you can manage the website content, users, orders, and more.</p>
+            <h1>Admin Control Panel</h1>
+            <p>Welcome back! Here is what is happening with your restaurant today.</p>
         </div>
-    </section>
-    <section class="admin-content">
-        <div class="content">
-            <div class="dashboard-cards">
-                <div class="card">
-                    <h3>Total Food Items</h3>
-                    <p><?php echo $total_food; ?></p>
+    </div>
+
+    <section class="section-padding">
+        <div class="container">
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-title">Menu Items</div>
+                    <div class="stat-number"><?php echo $total_food; ?></div>
                 </div>
-                <div class="card">
-                    <h3>Total Users</h3>
-                    <p><?php echo $total_users; ?></p>
-                    <?php if ($user_increase > 0): ?>
-                        <p class="increase">(+<?php echo $user_increase; ?> since last visit)</p>
-                    <?php elseif ($user_increase < 0): ?>
-                        <p class="decrease">(<?php echo $user_increase; ?> since last visit)</p>
-                    <?php else: ?>
-                        <p class="decrease">(No change since last visit)</p>
-                    <?php endif; ?>
+                <div class="stat-card">
+                    <div class="stat-title">Registered Users</div>
+                    <div class="stat-number"><?php echo $total_users; ?></div>
                 </div>
-                <div class="card">
-                    <h3>Total Orders</h3>
-                    <p><?php echo $total_orders; ?></p>
-                    <?php if ($order_increase > 0): ?>
-                        <p class="increase">(+<?php echo $order_increase; ?> since last visit)</p>
-                    <?php elseif ($order_increase < 0): ?>
-                        <p class="decrease">(<?php echo $order_increase; ?> since last visit)</p>
-                    <?php else: ?>
-                        <p class="decrease">(No change since last visit)</p>
-                    <?php endif; ?>
+                <div class="stat-card">
+                    <div class="stat-title">Total Orders</div>
+                    <div class="stat-number"><?php echo $total_orders; ?></div>
                 </div>
+            </div>
+            
+            <div class="admin-actions">
+                <a href="manage_food.php" class="btn-primary">Manage Food Menu</a>
+                <a href="manage_orders.php" class="btn-nav-outline">View Recent Orders</a>
             </div>
         </div>
     </section>
+
     <?php include 'footer.php'; ?>
 </body>
 </html>
