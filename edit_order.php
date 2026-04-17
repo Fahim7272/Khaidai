@@ -1,86 +1,71 @@
 <?php
 session_start();
-
-if (!isset($_SESSION['admin'])) {
-    header("Location: login.php");
-    exit();
-}
-
+if (!isset($_SESSION['admin'])) { header("Location: login.php"); exit(); }
 include('db_connection.php');
 
 if (isset($_POST['submit'])) {
-    $id = $_POST['id'];
-    $status = $_POST['status'];
-
-    $sql = "UPDATE orders SET status = ?, updated_at = NOW() WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("si", $status, $id);
-    $stmt->execute();
-    $stmt->close();
-    $conn->close();
-
-    header("Location: manage_orders.php");
-    exit();
+    $id = $_POST['id']; $status = $_POST['status'];
+    $sql = "UPDATE orders SET delivery_status = ?, updated_at = NOW() WHERE id = ?";
+    $stmt = $conn->prepare($sql); $stmt->bind_param("si", $status, $id);
+    $stmt->execute(); $stmt->close(); $conn->close();
+    header("Location: manage_orders.php"); exit();
 }
 
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
-    $sql = "SELECT id, status FROM orders WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $order = $result->fetch_assoc();
-    $stmt->close();
-    $conn->close();
-} else {
-    header("Location: manage_orders.php");
-    exit();
-}
+    $sql = "SELECT id, delivery_status FROM orders WHERE id = ?";
+    $stmt = $conn->prepare($sql); $stmt->bind_param("i", $id); $stmt->execute();
+    $order = $stmt->get_result()->fetch_assoc(); $stmt->close();
+} else { header("Location: manage_orders.php"); exit(); }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Order</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/admin.css">
+    <meta charset="UTF-8"><title>Edit Order Status</title>
+    <link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/modern.css">
+    <style>
+        .form-container{
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:60vh;
+        } 
+        .form-card{
+            background:var(--white);
+            padding:40px;
+            border-radius:var(--radius-lg);
+            box-shadow:var(--shadow-soft);
+            width:100%;max-width:500px;
+            
+        } 
+        .form-control{
+            width:100%;
+            padding:12px;
+            border:1px solid #ccc;
+            border-radius:8px;
+            margin-bottom:20px;
+            font-family:'Poppins';
+        }
+    </style>
 </head>
-<body>
+<body class="bg-light">
     <?php include 'navbar.php'; ?>
-    <div class="admin-dashboard">
-        <div class="sidebar">
-            <h2>Admin Menu</h2>
-            <ul>
-                <li><a href="manage_food.php">Manage Food Items</a></li>
-                <li><a href="manage_users.php">Manage Users</a></li>
-                <li><a href="manage_orders.php">Manage Orders</a></li>
-                <li><a href="settings.php">Settings</a></li>
-                <li><a href="logout.php">Logout</a></li>
-            </ul>
-        </div>
-        <div class="content">
-            <h1>Edit Order</h1>
+    <section class="form-container section-padding">
+        <div class="form-card">
+            <h2 class="text-center" style="margin-bottom: 30px;">Update Order #<?php echo str_pad($order['id'], 5, '0', STR_PAD_LEFT); ?></h2>
             <form action="edit_order.php" method="post">
                 <input type="hidden" name="id" value="<?php echo htmlspecialchars($order['id']); ?>">
-                <div class="form-group">
-                    <label for="status">Status:</label>
-                    <select id="status" name="status">
-                        <option value="Pending" <?php echo ($order['status'] == 'Pending') ? 'selected' : ''; ?>>Pending</option>
-                        <option value="Processing" <?php echo ($order['status'] == 'Processing') ? 'selected' : ''; ?>>Processing</option>
-                        <option value="Completed" <?php echo ($order['status'] == 'Completed') ? 'selected' : ''; ?>>Completed</option>
-                    </select>
-                </div>
-                <button type="submit" name="submit" class="btn btn-primary">Save Changes</button>
+                <label style="font-weight: 500;">Delivery Status:</label>
+                <select name="status" class="form-control">
+                    <option value="Pending" <?php echo ($order['delivery_status'] == 'Pending') ? 'selected' : ''; ?>>Pending</option>
+                    <option value="Out for Delivery" <?php echo ($order['delivery_status'] == 'Out for Delivery') ? 'selected' : ''; ?>>Out for Delivery</option>
+                    <option value="Delivered" <?php echo ($order['delivery_status'] == 'Delivered') ? 'selected' : ''; ?>>Delivered</option>
+                </select>
+                <button type="submit" name="submit" class="btn-primary" style="width: 100%; padding: 15px; border-radius: 8px; border:none; cursor:pointer;">Update Status</button>
             </form>
-        </div>
-    </div>
-    <section class="footer">
-        <div class="container text-center">
-            <p>All rights reserved - KhaiDai</p>
+            <div class="text-center" style="margin-top: 20px;"><a href="manage_orders.php" style="color: var(--text-muted);">&larr; Back to Orders</a></div>
         </div>
     </section>
+    <?php include 'footer.php'; ?>
 </body>
 </html>

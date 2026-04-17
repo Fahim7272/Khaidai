@@ -1,7 +1,5 @@
-?php
+<?php
 session_start();
-
-// Check if the admin is logged in
 if (!isset($_SESSION['admin'])) {
     header("Location: login.php");
     exit();
@@ -9,31 +7,17 @@ if (!isset($_SESSION['admin'])) {
 
 include('db_connection.php');
 
-// Define variables and initialize with empty values
 $name = $email = $current_password = $new_password = "";
-$name_err = $email_err = $current_password_err = $new_password_err = "";
-$success_message = "";
+$error_message = $success_message = "";
 
-// Processing form data when form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Validate and process profile update
     if (isset($_POST['update_profile'])) {
-        // Validate name
-        if (empty(trim($_POST["name"]))) {
-            $name_err = "Please enter a name.";
-        } else {
-            $name = trim($_POST["name"]);
-        }
+        $name = trim($_POST["name"]);
+        $email = trim($_POST["email"]);
 
-        // Validate email
-        if (empty(trim($_POST["email"]))) {
-            $email_err = "Please enter an email.";
+        if (empty($name) || empty($email)) {
+            $error_message = "Name and Email are required.";
         } else {
-            $email = trim($_POST["email"]);
-        }
-
-        // Check input errors before updating in database
-        if (empty($name_err) && empty($email_err)) {
             $sql = "UPDATE admins SET name = ?, email = ? WHERE id = ?";
             if ($stmt = $conn->prepare($sql)) {
                 $stmt->bind_param("ssi", $name, $email, $_SESSION['admin']['id']);
@@ -41,65 +25,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $success_message = "Profile updated successfully.";
                     $_SESSION['admin']['name'] = $name;
                     $_SESSION['admin']['email'] = $email;
-                } else {
-                    echo "Something went wrong. Please try again later.";
                 }
                 $stmt->close();
             }
         }
     }
 
-    // Validate and process password change
     if (isset($_POST['change_password'])) {
-        // Validate current password
-        if (empty(trim($_POST["current_password"]))) {
-            $current_password_err = "Please enter your current password.";
-        } else {
-            $current_password = trim($_POST["current_password"]);
-        }
+        $current_password = $_POST['current_password'];
+        $new_password = $_POST['new_password'];
 
-        // Validate new password
-        if (empty(trim($_POST["new_password"]))) {
-            $new_password_err = "Please enter a new password.";
-        } else {
-            $new_password = trim($_POST["new_password"]);
-        }
+        $sql = "SELECT password FROM admins WHERE id = ?";
+        if ($stmt = $conn->prepare($sql)) {
+            $stmt->bind_param("i", $_SESSION['admin']['id']);
+            $stmt->execute();
+            $stmt->bind_result($db_password);
+            $stmt->fetch();
+            $stmt->close();
 
-        // Check current password and update new password in database
-        if (empty($current_password_err) && empty($new_password_err)) {
-            $sql = "SELECT password FROM admins WHERE id = ?";
-            if ($stmt = $conn->prepare($sql)) {
-                $stmt->bind_param("i", $_SESSION['admin']['id']);
-                if ($stmt->execute()) {
-                    $stmt->store_result();
-                    if ($stmt->num_rows == 1) {
-                        $stmt->bind_result($hashed_password);
-                        if ($stmt->fetch()) {
-                            if ($current_password === $hashed_password) {
-                                $sql = "UPDATE admins SET password = ? WHERE id = ?";
-                                if ($stmt = $conn->prepare($sql)) {
-                                    $stmt->bind_param("si", $new_password, $_SESSION['admin']['id']);
-                                    if ($stmt->execute()) {
-                                        $success_message = "Password changed successfully.";
-                                    } else {
-                                        echo "Something went wrong. Please try again later.";
-                                    }
-                                }
-                            } else {
-                                $current_password_err = "The current password you entered was not valid.";
-                            }
-                        }
+            if ($current_password === $db_password) {
+                $update_sql = "UPDATE admins SET password = ? WHERE id = ?";
+                if ($update_stmt = $conn->prepare($update_sql)) {
+                    $update_stmt->bind_param("si", $new_password, $_SESSION['admin']['id']);
+                    if ($update_stmt->execute()) {
+                        $success_message = "Password changed successfully.";
                     }
-                } else {
-                    echo "Something went wrong. Please try again later.";
+                    $update_stmt->close();
                 }
-                $stmt->close();
+            } else {
+                $error_message = "Incorrect current password.";
             }
         }
     }
 }
-
-$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -107,65 +65,73 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Settings</title>
+    <title>Admin Settings - KhaiDai</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/modern.css">
+    <style>
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; max-width: 1000px; margin: 0 auto; align-items: start; }
+        .form-card { background: var(--white); padding: 40px; border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); }
+        .form-card h3 { margin-bottom: 25px; color: var(--text-main); border-bottom: 2px solid var(--light-bg); padding-bottom: 15px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-muted); }
+        .form-control { width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 8px; font-family: 'Poppins', sans-serif; transition: var(--transition); }
+        .form-control:focus { border-color: var(--primary-color); outline: none; }
+        @media (max-width: 768px) { .settings-grid { grid-template-columns: 1fr; } }
+    </style>
 </head>
-<body>
+<body class="bg-light">
     <?php include 'navbar.php'; ?>
-    <div class="main-content">
-        <div class="wrapper">
-            <h1>Admin Settings</h1>
-            <br><br>
 
-            <?php 
-            if(!empty($success_message)){
-                echo '<div class="success">' . $success_message . '</div>';
-            }
-            ?>
-
-            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
-                <fieldset>
-                    <legend>Update Profile</legend>
-                    <div class="input-container">
-                        <label for="name">Name:</label>
-                        <input type="text" id="name" name="name" class="input-responsive" value="<?php echo htmlspecialchars($_SESSION['admin']['name']); ?>" required>
-                        <span class="error"><?php echo $name_err; ?></span>
-                    </div>
-                    <div class="input-container">
-                        <label for="email">Email:</label>
-                        <input type="email" id="email" name="email" class="input-responsive" value="<?php echo htmlspecialchars($_SESSION['admin']['email']); ?>" required>
-                        <span class="error"><?php echo $email_err; ?></span>
-                    </div>
-                    <input type="submit" name="update_profile" value="Update Profile" class="btn btn-primary">
-                </fieldset>
-            </form>
-
-            <br><br>
-
-            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
-                <fieldset>
-                    <legend>Change Password</legend>
-                    <div class="input-container">
-                        <label for="current_password">Current Password:</label>
-                        <input type="password" id="current_password" name="current_password" class="input-responsive" required>
-                        <span class="error"><?php echo $current_password_err; ?></span>
-                    </div>
-                    <div class="input-container">
-                        <label for="new_password">New Password:</label>
-                        <input type="password" id="new_password" name="new_password" class="input-responsive" required>
-                        <span class="error"><?php echo $new_password_err; ?></span>
-                    </div>
-                    <input type="submit" name="change_password" value="Change Password" class="btn btn-primary">
-                </fieldset>
-            </form>
-
-        </div>
-    </div>
-    <section class="footer">
-        <div class="container text-center">
-            <p>All rights reserved - KhaiDai</p>
+    <section class="hero-section" style="height: 25vh; min-height: 200px;">
+        <div class="hero-overlay"></div>
+        <div class="container hero-content text-center">
+            <h1 class="hero-title" style="font-size: 2.2rem;">Account Settings</h1>
         </div>
     </section>
+
+    <section class="section-padding">
+        <div class="container">
+            <?php if ($success_message): ?>
+                <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; max-width: 1000px; margin: 0 auto 30px;"><?php echo $success_message; ?></div>
+            <?php endif; ?>
+            <?php if ($error_message): ?>
+                <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; max-width: 1000px; margin: 0 auto 30px;"><?php echo $error_message; ?></div>
+            <?php endif; ?>
+
+            <div class="settings-grid">
+                <div class="form-card">
+                    <h3>Update Profile</h3>
+                    <form action="settings.php" method="POST">
+                        <div class="form-group">
+                            <label>Admin Name</label>
+                            <input type="text" name="name" class="form-control" value="<?php echo htmlspecialchars($_SESSION['admin']['name']); ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Admin Email</label>
+                            <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($_SESSION['admin']['email']); ?>" required>
+                        </div>
+                        <button type="submit" name="update_profile" class="btn-primary" style="width: 100%; padding: 12px; border-radius: 8px; border: none; cursor: pointer; font-size: 1.1rem; margin-top: 10px;">Save Changes</button>
+                    </form>
+                </div>
+
+                <div class="form-card">
+                    <h3>Security</h3>
+                    <form action="settings.php" method="POST">
+                        <div class="form-group">
+                            <label>Current Password</label>
+                            <input type="password" name="current_password" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input type="password" name="new_password" class="form-control" required>
+                        </div>
+                        <button type="submit" name="change_password" class="btn-nav-solid" style="background: var(--dark-bg); width: 100%; padding: 12px; border-radius: 8px; border: none; cursor: pointer; font-size: 1.1rem; margin-top: 10px;">Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <?php include 'footer.php'; ?>
 </body>
 </html>
