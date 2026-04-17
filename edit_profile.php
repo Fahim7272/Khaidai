@@ -8,8 +8,10 @@ if (!isset($_SESSION['user'])) {
 }
 
 $user = $_SESSION['user'];
+$success_message = $error_message = "";
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Handle Text Details Update
     if (isset($_POST['update_profile'])) {
         $name = $_POST['name'];
         $email = $_POST['email'];
@@ -23,35 +25,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->bind_param("sssi", $name, $email, $location, $user['id']);
 
             if ($stmt->execute()) {
-                $success_message = "Profile updated successfully!";
+                $success_message = "Profile details updated successfully!";
                 $_SESSION['user']['name'] = $name;
                 $_SESSION['user']['email'] = $email;
                 $_SESSION['user']['location'] = $location; 
-
+            } else {
                 $error_message = "Error updating profile: " . $conn->error;
             }
-
             $stmt->close();
         }
     }
 
+    // Handle Profile Picture Update
     if (isset($_POST['update_picture'])) {
         if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] == 0) {
             $profile_picture = file_get_contents($_FILES['profile_picture']['tmp_name']);
             $sql = "UPDATE users SET profile_picture=? WHERE id=?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("bi", $profile_picture, $user['id']);
-
+            $stmt->send_long_data(0, $profile_picture);
+            
             if ($stmt->execute()) {
                 $success_message = "Profile picture updated successfully!";
-                $_SESSION['user']['profile_picture'] = $profile_picture; 
             } else {
-                $error_message = "Error updating profile picture: " . $conn->error;
+                $error_message = "Failed to update picture.";
             }
-
             $stmt->close();
         } else {
-            $error_message = "Please select a valid image file.";
+            $error_message = "Please select a valid image.";
         }
     }
 }
@@ -62,55 +63,77 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile</title>
+    <title>Edit Profile - KhaiDai</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/edit_profile.css">
+    <link rel="stylesheet" href="css/modern.css">
+    <style>
+        .edit-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; max-width: 1000px; margin: 0 auto; align-items: start; }
+        .form-card { background: var(--white); padding: 40px; border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); }
+        .form-card h3 { margin-bottom: 25px; color: var(--text-main); border-bottom: 2px solid var(--light-bg); padding-bottom: 15px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-muted); }
+        .form-control { width: 100%; padding: 12px 15px; border: 1px solid #dcdde1; border-radius: 8px; font-family: 'Poppins', sans-serif; transition: var(--transition); }
+        .form-control:focus { border-color: var(--primary-color); outline: none; }
+        @media (max-width: 768px) { .edit-grid { grid-template-columns: 1fr; } }
+    </style>
 </head>
-<body>
+<body class="bg-light">
     <?php include 'navbar.php'; ?>
 
-    <section class="edit-profile">
+    <section class="hero-section" style="height: 25vh; min-height: 200px;">
+        <div class="hero-overlay"></div>
+        <div class="container hero-content text-center">
+            <h1 class="hero-title" style="font-size: 2.2rem;">Edit Your Profile</h1>
+        </div>
+    </section>
+
+    <section class="section-padding">
         <div class="container">
-            <h2>Edit Profile</h2>
-
-            <?php if (isset($success_message)): ?>
-                <div class="alert alert-success"><?php echo $success_message; ?></div>
+            <?php if ($success_message): ?>
+                <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; max-width: 1000px; margin: 0 auto 30px;"><?php echo $success_message; ?></div>
             <?php endif; ?>
-            <?php if (isset($error_message)): ?>
-                <div class="alert alert-danger"><?php echo $error_message; ?></div>
+            <?php if ($error_message): ?>
+                <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; max-width: 1000px; margin: 0 auto 30px;"><?php echo $error_message; ?></div>
             <?php endif; ?>
 
-            <form action="edit_profile.php" method="POST">
-                <label for="name">Name:</label>
-                <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($user['name']); ?>" required>
+            <div class="edit-grid">
+                <div class="form-card text-center">
+                    <h3>Profile Picture</h3>
+                    <img src="images/default-profile-img.jpg" alt="Avatar" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 20px; border: 3px solid var(--light-bg);">
+                    <form action="edit_profile.php" method="POST" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <input type="file" name="profile_picture" class="form-control" accept="image/*" required>
+                        </div>
+                        <button type="submit" name="update_picture" class="btn-nav-outline" style="width: 100%; padding: 10px; border-radius: 8px; cursor: pointer;">Upload Picture</button>
+                    </form>
+                </div>
 
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
-
-                <label for="location">Location:</label>
-                <input type="text" id="location" name="location" value="<?php echo isset($user['location']) ? htmlspecialchars($user['location']) : ''; ?>">
-
-                <input type="submit" name="update_profile" value="Save Changes">
-            </form>
-
+                <div class="form-card">
+                    <h3>Personal Details</h3>
+                    <form action="edit_profile.php" method="POST">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" name="name" class="form-control" value="<?php echo htmlspecialchars($user['name']); ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($user['email']); ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Delivery Address</label>
+                            <input type="text" name="location" class="form-control" placeholder="e.g. Banani, Road 11" value="<?php echo isset($user['location']) ? htmlspecialchars($user['location']) : ''; ?>">
+                        </div>
+                        <button type="submit" name="update_profile" class="btn-primary" style="width: 100%; padding: 12px; border-radius: 8px; border: none; cursor: pointer; font-size: 1.1rem; margin-top: 10px;">Save Changes</button>
+                    </form>
+                </div>
+            </div>
             
+            <div class="text-center" style="margin-top: 30px;">
+                <a href="profile.php" style="color: var(--text-muted); font-weight: 500;">&larr; Back to Profile Dashboard</a>
+            </div>
         </div>
     </section>
 
-    <section class="social">
-        <div class="container text-center">
-            <ul>
-                <li><a href="#"><img src="https://img.icons8.com/fluent/50/000000/facebook-new.png" alt="Facebook"></a></li>
-                <li><a href="#"><img src="https://img.icons8.com/fluent/48/000000/instagram-new.png" alt="Instagram"></a></li>
-                <li><a href="#"><img src="https://img.icons8.com/fluent/48/000000/twitter.png" alt="Twitter"></a></li>
-            </ul>
-        </div>
-    </section>
-
-    <section class="footer">
-        <div class="container text-center">
-            <p>All rights reserved - KhaiDai</p>
-        </div>
-    </section>
+    <?php include 'footer.php'; ?>
 </body>
 </html>
